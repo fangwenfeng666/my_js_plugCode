@@ -154,7 +154,7 @@ function plug_move(){
 			var iCur={};
 			for(var att in json_att){
 				if (is_scroll) {/*滚动条*/
-					iCur[att]=document.documentElement.scrollTop||document.body.scrollTop;
+					iCur[att]=obj[att];
 				}
 				else{
 					att==="opacity" ? iCur[att] = Math.round(_obj.getCSS(obj,att)*100) : iCur[att] = parseInt(_obj.getCSS(obj,att));
