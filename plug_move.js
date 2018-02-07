@@ -1,9 +1,9 @@
 function plug_move(){
 /*
 *t  当前时间 (time) 初始时间
-*b  初始位置 (beginning position)
-*c  距离 (change position) 运动的距离
-*d  持续时间 (duration)运动多少时间
+*b  初始位置 (beginning position)		(固定)
+*c  距离 (change position) 运动的距离	(固定)
+*d  持续时间 (duration)运动多少时间		(固定)
 *p  最终位置 (position)
 */	
 	var _obj=this;
@@ -196,75 +196,6 @@ function plug_move(){
 			//this.Timeout=setTimeout(this.m,1000/60);
 			obj.Timeout=setInterval(this.m,1000/60);
 			//this.m.call(this);
-		}
-	};
-	this.move_v={
-		/*
-		*b 初始位置
-		*c 距离（运动的距离）
-		*p 最终位置
-		*v 速度
-		*/
-		linear:function(b, p, v, c){ 	//匀速
-			//p最终位置 b当前(变化的值) c运动距离
-			v=~~(c/v);
-			var _p=b+v*(((p-b)/Math.abs(p-b)));//v*(((p-b)/Math.abs(p-b)))确定方向
-			var tf=Math.abs(p-_p);
-			//console.log(v,_p,p)
-			return tf<=0+Math.abs(v)||tf>=c? [p,true] : [_p,false]; //返回当前位置 （p当前）
-		}
-		,vOut:function(b, p, v, c){		//减速
-			//p最终位置 b当前(变化的值) c运动距离
-			var _v=((p-b)/v);
-			_v=~~(_v+1*((p-b)/Math.abs(p-b)));
-			var _p=b+_v;
-			var tf=Math.abs(p-_p);
-			//console.log(tf)
-			return tf<1||tf>c ? [p,true] : [_p,false]; //返回当前位置
-		}
-		,move:function(obj,json,V,mode,is_scroll,fun){
-			/*获取初始值*/
-			var iCur={};
-			for(var att in json){
-				if (is_scroll) {
-					iCur[att]=obj.scrollTop;//滚动的高度
-				}
-				else{
-					att=="opacity" ? iCur[att]=Math.round(_obj.getCSS(obj,att)*100) : iCur[att]=parseInt(_obj.getCSS(obj,att));
-				}
-			}
-			/*先清除上一个定时器*/
-			clearInterval(obj.Interval);
-			this.m=function(){
-				for(var attr in json){
-					/*获取b,p,v,c四个参数*/
-					var b= is_scroll ? obj[attr] : parseInt(_obj.getCSS(obj,attr));
-					var p=json[attr];
-					var c=Math.abs(json[attr]-iCur[attr]);
-					var v=V;
-					/*赋值操作*/
-					var arr_value=_obj.move_v[mode](b,p,V,c);
-					var _p=arr_value[0];
-					var TF=arr_value[1];
-					if (is_scroll) {
-						obj[attr]=_p;
-					}
-					else{
-						if (attr=="opacity") {
-							obj.style.opacity = _p / 100;
-							 obj.style.filter = 'alpha(opacity=' + _p + ')';
-						}
-						else{
-							 obj.style[attr] = _p + 'px';
-						}
-					}					
-				}
-				/*清除定时器*/
-				(TF)&&(clearInterval(obj.Interval));
-				(fun)&&(fun.call(obj));
-			}
-			obj.Interval=setInterval(this.m,1000/60);
-
 		}
 	};
 
