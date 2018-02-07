@@ -14,9 +14,9 @@ function plug_move(){
 		/*
 		*tween算法 (基于时间的动画)
 		*/
-		linear:function(t,b,c,d){ 			//匀速
-			return c*t/d + b; //kx+b
-		}
+	    linear:function(t,b,c,d){ 			//匀速
+		return c*t/d + b; //kx+b
+	    }
 	    ,easeIn: function(t, b, c, d){  	//加速曲线 ease前进的意思
 	        return c*(t/=d)*t + b;
 	    }
