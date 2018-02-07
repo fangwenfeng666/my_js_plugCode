@@ -141,7 +141,9 @@ function plug_move(){
 	        }
 	        return this['bounceOut'](t*2-d, 0, c, d) * 0.5 + c*0.5 + b;
 	    }
-	    /*调用该函数 方法（move）执行动画*/
+	    /*调用该函数 方法（move）执行动画
+	    *参数：对象,对象属性和属性值（json格式）,动画时间,运动方式（模式）,是否是没有单位的属性值,回调函数
+	    */
 		,move:function(obj,json_att,times,mode,is_scroll,fun){
 			(!times)&&(times=500);
 			(!mode)&&(mode="easeOut");
