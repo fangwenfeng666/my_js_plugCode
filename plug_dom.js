@@ -1,4 +1,23 @@
-function plug_dom(){}
+function plug_dom(){
+	window.is_array=function(argument){
+		return argument && (typeof argument==="object") && ("length" in argument) ? true : false ;//检测是否是数组
+	}
+	window.is_object=function(argument){
+		return argument && (typeof argument==="object") && !("length" in argument) ? true : false ;//检测是否是对象
+	}
+	if (arguments.length>0) {
+		for(var i=0,len=arguments.length;i<len;i++){
+			if (typeof arguments[i]==="function") {
+				arguments[i].call(this);
+			}
+			if (typeof arguments[i]==="object" && !("length" in arguments[i])) {
+				for(var att in arguments[i]){
+					this[att]=arguments[i][att];
+				}
+			}
+		}
+	}
+}
 plug_dom.prototype={
 	/*获取元素
 	*参数：获取元素的范围(默认document),对象属性名,对象属性值,是否自定义属性,元素名称(标签名)
