@@ -1,12 +1,11 @@
-function plug_dom(){
-	window.is_array=function(argument){
+function plug_ajax(){
+	(typeof window.is_array !="function")&&(window.is_array=function(argument){
 		return argument && (typeof argument==="object") && ("length" in argument) ? true : false ;//检测是否是数组
-	}
-	window.is_object=function(argument){
+	});
+	(typeof window.is_object !="function")&&(window.is_object=function(argument){
 		return argument && (typeof argument==="object") && !("length" in argument) ? true : false ;//检测是否是对象
-	}
-	//回调函数要三个参数表示： 数组（或对象）,下标（key），value
-	window.foreach=function(array_or_json,fun){
+	});
+	(typeof window.foreach !="function")&&(window.foreach=function(array_or_json,fun){
 		if (is_array(array_or_json)) {
 			if (typeof fun==="function") {
 				for(var i=0,len=array_or_json.length;i<len;i++){
@@ -22,8 +21,7 @@ function plug_dom(){
 				}
 			}
 		}
-	}
-
+	});
 	if (arguments.length>0) {
 		for(var i=0,len=arguments.length;i<len;i++){
 			if (typeof arguments[i]==="function") {
@@ -37,206 +35,10 @@ function plug_dom(){
 		}
 	}
 }
-plug_dom.prototype={
-	/*获取元素
-	*参数：获取元素的范围(默认document),对象属性名,对象属性值,是否自定义属性,元素名称(标签名)
-	*/
-	getElements:function(range,attribute_name,attribute_value,is_myAtt,element_name){
-		var arr_ele=[];
-		(!range)&&(range=document);
-		if (element_name) {
-			return range.getElementsByTagName(element_name);
-		}
-		else{
-			var elements=range.getElementsByTagName('*');
-			if (is_myAtt==true||is_myAtt==1) {
-				for(var i=0,len=elements.length,j=0;i<len;i++){
-					if (elements[i]["dataset"][attribute_name]==attribute_value) {
-						arr_ele[j]=elements[i];
-						j++;
-					}
-				}
-			}
-			else{
-				for(var i=0,j=0,len=elements.length;i<len;i++){
-					if (elements[i][attribute_name]==attribute_value) {
-						arr_ele[j]=elements[i];
-						j++;
-					}
-				}
-			}
-		}
-		return arr_ele;
-	}
-	/*设置对象属性名和属性值
-	*参数：对象,json格式(如{xx:{},xxx:"xxx"})
-	*/
-	,set_obj_att:function(obj,json_att){
-		if (obj && (typeof json_att=="object")) {
-			for(var att in json_att){
-				if (typeof json_att[att]=="object") {
-					//obj[att]={};
-					this.set_obj_att(obj[att],json_att[att]);
-				}
-				else{
-					obj[att]=json_att[att];
-				}
-			}
-		}
-	}
-	/*插入元素
-	*参数：父元素对象,元素名,设置元素属性和属性值,插入的参照位置(值可以为空),回调函数(值可以为空)
-	*/
-	,insertElement:function(parentElement,element_name,ele_att,refer_node,fun){
-		if (parentElement&&element_name) {
-			var E=document.createElement(element_name);
-			this.set_obj_att(E,ele_att);
-			(fun&&typeof fun=="function")&&(fun(E,this));
-			refer_node ? parentElement.insertBefore(E,refer_node) : parentElement.appendChild(E);
-			return true;
-		}
-		else{
-			return false;
-		}
-	}
-	,EventListener:{
-		add:function(listener_obj,event_type,fun){
-			if (listener_obj.addEventListener) {
-				listener_obj.addEventListener(event_type,fun,false);
-			}
-			else if (listener_obj.attachEvent) {
-				listener_obj.attachEvent("on"+event_type,fun);
-			}
-			else{
-				listener_obj["on"+event_type]=fun; //阻止默认事件在fun函数里直接返回false: return false;
-			}
-		}
-		,remove:function(listener_obj,event_type,fun){
-			if(listener_obj.removeEventListener){
-				listener_obj.removeEventListener(event_type,fun,false);
-			}
-			else if (listener_obj.detachEvent) {
-				listener_obj.detachEvent("on"+event_type,fun);
-			}
-			else{
-				listener_obj["on"+event_type]=null;
-			}	
-		}
-		,getEvent:function(e){
-			if (e) {
-				return e||window.event;
-			}
-			else{
-				return false;
-			}
-		}
-		,getTarget:function(e){
-			if (e) {
-				return e.target||e.srcElement;
-			}
-			else{
-				return false;
-			}
-		}
-		,preventDefault:function(e){
-			if (e.preventDefault) {
-				e.preventDefault();
-			}
-			else{
-				e.returnValue=false;
-			}
-		}
-	}
-	,ajax:function(json,fun,form_ele,fn){
-		//json.method-->post,get   json.action:处理地址 json.data:处理数据（get）
-		if (!is_object(json)) {
-			return false;
-		}
-		var data="?";
-		
-		if (is_object(json.data)) {
-			//console.log(json.data)
-			foreach(json.data,function(obj,key,value){
-				data+=key+"="+value+"&";
-
-			});
-			data=data.substr(0,data.length-1);
-		}
-		//console.log(data)
-		var xhr=new XMLHttpRequest();
-		xhr.open(json.method,json.action+data,true);
-		xhr.onreadystatechange=function(e){
-			if(this.readyState==4&&this.status>=200){
-				var texts=this.responseText;
-				(typeof fun==="function")&&(fun(texts));
-			}
-		}
-		if (is_object(form_ele)) {
-			xhr.send(new FormData(form_ele));
-			return;
-		}
-		if (typeof fn==="function") {
-			var form_data=new FormData();
-			fn.call(this,form_data);
-			xhr.send(form_data);
-			return;
-		}
-		//form_ele ? xhr.send(new FormData(form_ele)) : xhr.send();
-		xhr.send(new FormData(form_ele));
-	}
-	//异步post
-	,ajax_post:function(json,fun){
-		//json.method-->post,get   json.action:处理地址 json.data:处理数据（get）
-		if(!is_object(json)){
-			json={
-				 action:""
-				,get:{}
-				,post:{}
-			};
-		}
-		json.method="post";
-		var get="?";
-		get+=this.en_str_json(json.get,{key:"=",json:"&"});
-		var xhr=new XMLHttpRequest();
-		xhr.open(json.method,json.action+get,true);
-		//设置请求头部
-		xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-		//发送数据（字符串）格式为：xx1=yy1&xx2=yy2 这样的字符串格式
-		xhr.send(this.en_str_json(json.post,{key:"=",json:"&"}));
-		console.log(this.en_str_json(json.post,{key:"=",json:"&"}));
-		xhr.onreadystatechange=function(e){
-			if(this.readyState==4&&this.status>=200){
-				var texts=this.responseText;
-				(typeof fun==="function")&&(fun.call(this,texts));
-			}
-		}
-
-	}
-	//regular 正则表达式或字符
-	,GET:function(regular){
-		var urlStr=location.href,arr=[];
-		if (/\?/i.test(urlStr)) {
-			urlStr=urlStr.split("?")[1];
-			if (is_object(regular)||(typeof regular==="string")) {
-				arr=urlStr.split(regular);
-			}
-			else{
-				arr=urlStr.split("&");
-			}
-			var json={};
-			for(var i=0,len=arr.length;i<len;i++){
-				var a_st=arr[i].split("=");
-				json[a_st[0]]=a_st[1];
-			}
-			return json;
-		}
-		else{
-			return false;
-		}
-	}
+plug_ajax.prototype={
 	//把字符串转换为一个json格式
 	//a1<=>1<,>a2<=>2 转换为 {a1:"1",a2:"2"}
-	,STR_JSON:function(strings,mode_json){
+	STR_JSON:function(strings,mode_json){
 		if (!strings) {return;}
 		(!mode_json)&&(mode_json={
 			//"<=>"左边为键名，右边为键值
@@ -250,19 +52,7 @@ plug_dom.prototype={
 		var arrStr=strings.split(_json);
 		foreach(arrStr,function(arr,key,value){
 			var a_str=value.split(keyName_keyValue);
-
-			var l=a_str.length;
-			if (l>2) {
-				var _str="";
-				for(var i=2;i<l;i++){
-					_str+=mode_json.key+a_str[i];
-				}
-				json[a_str[0]]=a_str[1]+_str;
-			}
-			else{
-				json[a_str[0]]=a_str[1];
-			}
-				
+			json[a_str[0]]=a_str[1];
 		});
 		return json;
 	}
@@ -415,7 +205,96 @@ plug_dom.prototype={
 		json2str_len=json2str.length;
 		return json2str.substr(0,json2str_len - c_json2_len);
 	}
+	,get_files:function(ele_file_2arr){
+		var file_arr=[],j=0;
+		if (ele_file_2arr && typeof ele_file_2arr==="object") {
+			for(var i=0,len=ele_file_2arr.length;i<len;i++){
+				if (ele_file_2arr[i] && typeof ele_file_2arr[i]==="object" && ele_file_2arr[i].length>0) {
+					for(var k=0,leng=ele_file_2arr[i].length;k<leng;k++){
+						file_arr[j]=ele_file_2arr[i][k];
+						j++;
+					}
+				}
+				else{
+					if (ele_file_2arr[i] && typeof ele_file_2arr[i]==="object") {
+						file_arr[j]=ele_file_2arr[i];
+						j++;
+					}	
+				}
+			}
+			return file_arr;//一维数组
+		}
+
+	}
+	,upload_files:function(file_obj_arr,fixed_keyname,url,fun){
+		(!fixed_keyname) && (fixed_keyname="file");
+		var form_data=new FormData();
+		if (file_obj_arr && typeof file_obj_arr==="object" && typeof fixed_keyname!=="number") {
+			var len=file_obj_arr.length;
+			for(var i=0;i<len;i++){
+				form_data.append(fixed_keyname+i,file_obj_arr[i]);
+			}
+			var xhr=new XMLHttpRequest();
+			xhr.open("post",url,true);
+			xhr.onreadystatechange=function(e){
+				if (this.readyState==4&&this.status>=200) {
+					var texts=this.responseText;
+					fun && fun.call(this,texts);
+				}
+			}
+			xhr.send(form_data);
+		}
+	}
+	//异步请求
+	,ajax:function(json,fun){
+		//json.method-->post,get   json.action:处理地址 json.data:处理数据（get）
+		if(!is_object(json)){
+			json={
+				 action:""
+				,method:"post"
+				,get:{}
+				,post:{}
+			};
+		}
+		(!json.method)&&(json.method="post");
+		var get="?";
+		get+=this.en_str_json(json.get,{key:"=",json:"&"});
+		var xhr=new XMLHttpRequest();
+		xhr.open(json.method,json.action+get,true);
+		if (json.method==="post"||json.method==="POST") {
+			//设置请求头部信息
+			xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+			//发送数据（字符串）格式为：xx1=yy1&xx2=yy2 这样的字符串格式
+			xhr.send(this.en_str_json(json.post,{key:"=",json:"&"}));
+		}
+		else{
+			xhr.send();
+		}
+		console.log(this.en_str_json(json.post,{key:"=",json:"&"}));
+		xhr.onreadystatechange=function(e){
+			if(this.readyState==4&&this.status>=200){
+				var texts=this.responseText;
+				(typeof fun==="function")&&(fun.call(this,texts));
+			}
+		}
+
+	}
+	,GET:function(config){
+		if (!is_object(config)) {
+			config={
+				key:"="
+				,json:"&"
+			};
+		}
+		var urlStr=decodeURIComponent(location.href);
+		if (/\?/i.test(urlStr)) {
+			//取右边部分
+			var urlStr=urlStr.split("?")[1];
+			return this.de_str_json(urlStr,{key:config.key,json:config.json});
+		}
+		else{
+			return false;
+		}
+
+	}
 };
-/*
-obj=dom.de_str_json2("ab2<==>ab1<=>ab<,,>ab2<==>cd1<=>ab<,>cdd1<=>abdds<,,>ab2<==>cd23<=>ab<,,>fang<==>fangwenfeng<=>fangjsojdfoiwj")
-*/

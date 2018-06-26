@@ -30,15 +30,15 @@ plug_date.prototype={
 		if (format) {
 			format=format.replace(/Y/i,this.getYear());
 			format=format.replace(/y/i,this.getYear(true));
-			format=format.replace(/M/i,this.getMonth());
-			format=format.replace(/m/i,this.getMonth());
-			format=format.replace(/D/i,this.getDate());
-			format=format.replace(/H/i,this.getHours());
+			format=this.getMonth()>9 ? format.replace(/(M|m)/i,this.getMonth()) : format.replace(/(M|m)/i,"0"+this.getMonth());
+			//format=this.getMonth()>9 ? format.replace(/m/i,this.getMonth()) : format.replace(/m/i,"0"+this.getMonth());
+			format=this.getDate()>9  ? format.replace(/D/i,this.getDate())  : format.replace(/D/i,"0"+this.getDate());
+			format=this.getHours()>9 ? format.replace(/H/i,this.getHours()) : format.replace(/H/i,"0"+this.getHours());
 			format=format.replace(/h/i,this.getHours(true));
-			format=format.replace(/I/i,this.getMinutes());
-			format=format.replace(/i/i,this.getMinutes());
-			format=format.replace(/S/i,this.getSeconds());
-			format=format.replace(/s/i,this.getSeconds());
+			format= format.replace(/(I|i)/i,this.getMinutes());
+			//format= format.replace(/i/i,this.getMinutes());
+			format= format.replace(/(S|s)/i,this.getSeconds());
+			//format= format.replace(/s/i,this.getSeconds());
 			format= language ? format.replace(/d/i,day_en[this.getDay()]) : format.replace(/d/i,day_ch[this.getDay()]) ;
 			return format;
 		}
