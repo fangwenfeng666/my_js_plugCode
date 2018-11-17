@@ -167,3 +167,4 @@ plug_canvas.prototype={
 Context=new plug_canvas();
 /*ctx.fillStyle=pat;
 ctx.fill();*/
+ 
