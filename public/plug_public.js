@@ -1201,6 +1201,65 @@ function plug_public(){
 		}
 	}
 
+	/*本地缓存(localStorage或sessionStorage)操作 【构造函数】
+	*@name string 值为(localStorage|sessionStorage),默认localStorage
+	*/
+	this.storage=function(name){
+		(name)||(name="localStorage");
+		this._Storage=window[name]; /* this._Storage=localStorage; 或 this._Storage=sessionStorage;*/
+		/*添加或修改localStorage对象或者sessionStorage的属性(键名)内容
+		*@key string 键名(对象属性) @value string|object|array 添加或修改的数据 @is_encode boolean 是否给字符串编码(true|false) 
+		*/
+		this.set=function(key,value,is_encode){
+			/*默认给字符串编码*/
+			(is_encode)||(is_encode=false);
+			if (!key) {return;}
+			if (is_object(value)||is_array(value)) {
+				this._Storage.setItem(key, is_encode ? JSON.stringify(value) : encodeURIComponent(JSON.stringify(value)) );
+				/*或者这样写: this._Storage[key]= is_encode ? JSON.stringify(value) : encodeURIComponent(JSON.stringify(value)); */
+			}
+			else{
+				this._Storage.setItem(key, is_encode ? value : encodeURIComponent(value) );
+			}
+		}
+		/*获取localStorage对象或者sessionStorage对象的属性(键名)内容
+		*@key string 键名(对象属性) @decode 是否给字符串解码(true|false)
+		*/
+		this.get=function(key,decode){
+			/*默认给字符串解码*/
+			(decode)||(decode=false);
+			if(!key) {return;}
+			var copy="",data="";
+			copy=data= decode ? this._Storage.getItem(key) : decodeURIComponent(this._Storage.getItem(key));
+			/*或者这样写: var data= decode ? this._Storage[key] : decodeURIComponent(this._Storage[key]); */
+			try{
+				data=JSON.parse(data);
+			}
+			catch(error){
+				console.log("错误！"+error.message);	
+			}	
+			return is_object(data)||is_array(data) ? data : copy ;
+		}
+		/*移除localStorage对象或者sessionStorage对象的属性(键名)内容
+		*@key stirng 键名(对象属性) @mode boolean 移除全部属性
+		*/
+		this.remove=function(key,mode){
+			/*默认移除指定的localStorage或sessionStorage内容*/
+			(key)||(mode=true);
+			mode ? this._Storage.clear() : this._Storage.removeItem(key) ;
+		}
+		/*遍历localStorage对象或者sessionStorage对象的属性(键名)内容
+		*@fun function 回调函数，传入2个参数【@key (键名),@value (键值)】
+		*/
+		this.foreach=function(fun){
+			for(var i=0,len=this._Storage.length;i<len;i++){
+				var key=this._Storage.key(i);
+				var value=this.get(key);
+				is_function(fun)&&fun.call(this,key,value);
+			}
+		}
+	}
+
 
 }
 plug_public.prototype={
