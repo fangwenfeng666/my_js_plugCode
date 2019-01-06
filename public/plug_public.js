@@ -249,6 +249,7 @@ function plug_public(){
 		return (fun[C.mode])&&(fun[C.mode]());
 	}
 	this.getElements=window.getElements;
+
 	/*
 	*插入元素
 	*@parentElement object 父元素 @element_name string 要创建的元素名称 @ele_att object(json格式) 设置创建元素的属性
@@ -1135,6 +1136,7 @@ function plug_public(){
 	}
 	/*
 	*@time number 时间戳 @formate string 时间格式
+	*new Date("yyyy/mm/dd hh:ii:ss");
 	*/
 	window.dateFormat=function(time,format){
 		var T=new Date();
@@ -1201,7 +1203,7 @@ function plug_public(){
 		}
 	}
 
-	/*本地缓存(localStorage或sessionStorage)操作 【构造函数】
+	/*本地缓存(localStorage或sessionStorage)操作,sessionStorage是关闭当前页面数据就清空 【构造函数】
 	*@name string 值为(localStorage|sessionStorage),默认localStorage
 	*/
 	this.storage=function(name){
@@ -1259,6 +1261,179 @@ function plug_public(){
 			}
 		}
 	}
+	/*标签选择器 @search string 类似css选择器 @parentE object 选择范围*/
+	window.eleGET=function(search,parentE){
+		var allE=is_object(parentE) ? parentE.getElementsByTagName('*') : document.getElementsByTagName('*');
+		var preg={
+			"class"				: /\.[A-Za-z_][A-Z_a-z0-9\-]*/
+			,"id"				: /#[A-Za-z_][A-Z_a-z0-9\-]*/
+			,"ele"				: /[A-Za-z_][A-Z_a-z0-9\-]*/
+			,"child"			: />/g
+			,"attribute"		: /[\.#A-Za-z_]*[A-Z_a-z0-9\-]*\[[A-Z_a-z0-9\-]+=[!-z\u4e00-\u9fa5]+\]/
+			,"attributePreg"	: /[\.#A-Za-z_]*[A-Z_a-z0-9\-]*\[[A-Z_a-z0-9\-]+\*=[!-z\u4e00-\u9fa5]+\]/
+		};
+		var fun={
+			class : function(){
+				if(!preg.class.test(search)){return [];}
+				search=search.replace(".","");
+				var sE=[],j=0;
+				foreach(allE,function(allE,i,value){
+					(value.className===search)&&(sE[j]=value)&&(j++);
+				});
+				return sE;
+			}
+			,id : function(){
+				if(!preg.id.test(search)){return [];}
+				search=search.replace("#","");
+				return document.getElementById(search);
+			}
+			,ele : function(){
+				if(!preg['ele'].test(search)){return [];}
+				var sE=[],j=0;
+				foreach(allE,function(arr,i,value){
+					(value.tagName.toLowerCase()===search.toLowerCase())&&(sE[j]=value)&&(j++);
+				});
+				return sE;
+			}
+			,child : function(){
+				// if(!preg['child'].test(search)){return [];}
+				search=search.replace(/ /g,"");
+				var searchArr=search.split(">");
+				var eleContainer=[];
+				var arrE=[ fun.screen(allE,searchArr[0]) ];
+				var o={
+					len:searchArr.length
+					,j:0
+					,i:0
+					,arr:[]
+				};
+				if(o.len>1){
+					for(var i=1,j=0,len=o.len;i<len;i++,j++){
+						var searchs=searchArr[i];
+						(function(i,eArr){
+							foreach(eArr,function(arr1,i1,value1){
+								var childEle=value1.children;
+								childEle=fun.screen(childEle,searchs);
+								foreach(childEle,function(arr2,i2,value2){
+									o.arr[o.i]=value2; o.i++;
+								});
+							});
+						})(i,arrE[j]);
+						arrE[i]=o.arr;
+						o.arr=[]; o.i=0;
+					}
+				}
+				var sE=arrE[o.len-1]; sE.type="child"; sE.getAll=arrE;
+				return sE;
+
+			}
+			,attribute : function(){
+				//if(!preg['attribute'].test(search)){return [];}
+				search=search.replace(/ /g,"");
+				var l=search.split(/\[[A-Z_a-z0-9\-]+=[!-z\u4e00-\u9fa5]+\]/)[0];
+				var r=search.match(/\[[A-Z_a-z0-9\-]+=[!-z\u4e00-\u9fa5]+\]?/g)[0];
+				var r1=r;
+				r=r.replace(/( |\[|\])/g,"");
+				var k_v=r.split('=');
+				var sE=[],o={j:0};
+				// console.log(l,r,k_v[0],k_v[1])
+				if (l) {
+					// var select=this.eleGET(l);
+					var select=fun.screen(allE,l);
+					sE=fun.screen(select,r1);
+				}
+				else{
+					foreach(allE,function(arr,i,value){
+						(value.getAttribute(k_v[0])===k_v[1])&&(sE[o.j]=value)&&(o.j++);
+					});
+				}
+				return sE;
+
+			}
+			,attributePreg : function(){
+				search=search.replace(/ /g,"");
+				var l=search.split(/\[[A-Z_a-z0-9\-]+\*=[!-z\u4e00-\u9fa5]+\]/)[0];
+				var r=search.match(/\[[A-Z_a-z0-9\-]+\*=[!-z\u4e00-\u9fa5]+\]?/g)[0];
+				var r1=r;
+				r=r.replace(/( |\[|\])/g,"");
+				var k_v=r.split('*=');
+				var sE=[],o={j:0};
+				// var preg=new RegExp(k_v[1]);
+				// console.log(l,r,k_v[0],k_v[1])
+				if (l) {
+					var select_ele=fun.screen(allE,l);
+					// console.log(select_ele,r1)
+					sE=fun.screen(select_ele,r1);
+					// console.log(sE);
+				}
+				else{
+					sE=fun.screen(allE,r1);
+				}
+				return sE;
+			}
+			/*元素标签筛选*/
+			,screen : function(eleArr,search){
+				if (!is_array(eleArr)) {return [];}
+				var sE=[],o={j:0};
+				if( /\[[A-Z_a-z0-9\-]+\*=[!-z\u4e00-\u9fa5]+\]/.test(search) ){
+					var r=search.match(/\[[A-Z_a-z0-9\-]+\*=[!-z\u4e00-\u9fa5]+\]?/g)[0];
+					r=r.replace(/( |\[|\])/g,"");
+					var k_v=r.split("*=");
+					// console.log("screen::",k_v[0],k_v[1])
+					var pre=new RegExp(k_v[1]);
+					foreach(eleArr,function(arr,i,value){
+						( (pre.test(value[k_v[0]]))||(pre.test(value.getAttribute(k_v[0])) ) )&&(sE[o.j]=value)&&(o.j++);
+					});
+				}
+				else if( /\[[A-Z_a-z0-9\-]+=[!-z\u4e00-\u9fa5]+\]/.test(search) ){
+					var r=search.match(/\[[A-Z_a-z0-9\-]+=[!-z\u4e00-\u9fa5]+\]?/g)[0];
+					r=r.replace(/( |\[|\])/g,"");
+					var k_v=r.split("=");
+					foreach(eleArr,function(arr,i,value){
+						( (value[k_v[0]]===k_v[1])||(value.getAttribute(k_v[0])===k_v[1]) )&&(sE[o.j]=value)&&(o.j++);
+					});
+				}
+				else if (preg.id.test(search)) {
+					search=search.replace("#","");
+					foreach(eleArr,function(arr,i,value){
+						(value.id===search)&&(sE[o.j]=value)&&(o.j++);
+					});
+				}
+				else if(preg.class.test(search)){
+					search=search.replace(".","");
+					foreach(eleArr,function(arr,i,value){
+						(value.className===search)&&(sE[o.j]=value)&&(o.j++);
+					});					
+				}
+				else{
+					foreach(eleArr,function(arr,i,value){
+						(value.tagName.toLowerCase()===search.toLowerCase())&&(sE[o.j]=value)&&(o.j++);
+					});						
+				}
+				return sE;
+
+			}
+		};
+		if (preg.child.test(search)) {
+			return fun.child.call(this);
+		}
+		else if (preg.attribute.test(search)) {
+			return fun.attribute.call(this);
+		}
+		else if(preg.attributePreg.test(search)){
+			return fun.attributePreg.call(this);
+		}
+		else if(preg.id.test(search)){
+			return fun.id.call(this);
+		}
+		else if(preg.class.test(search)){
+			return fun.class.call(this);
+		}
+		else{
+			return fun.ele.call(this);
+		}
+	}
+
 
 
 }
@@ -1544,4 +1719,5 @@ var $T=new tmpl();
 *“||”与“&&”的性质相反【一真为真，全假为假】
 *正则表达式的"i"标记是不区分大小写的意思，"g"标志是全局匹配，"gi"表示全局匹配并且不区分大小写(多次匹配)。局部匹配(只匹配一次)
 *区分大小写局部匹配:/正则表达式/。不区分大小写局部匹配:/正则表达式/i。区分大小写全部匹配:/正则表达式/g。不区分大小写全部匹配:/正则表达式/gi
+*
 */
